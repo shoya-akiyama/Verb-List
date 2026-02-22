@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>Icon Generator</title></head>
+<body style="background:#222;color:#fff;font-family:sans-serif;padding:20px;">
+<h2>アプリアイコン生成</h2>
+<p>下の2つの画像をそれぞれ右クリック（長押し）→ 保存してください。</p>
+<p><strong>icon-192.png:</strong></p>
+<canvas id="c192" width="192" height="192"></canvas>
+<p><strong>icon-512.png:</strong></p>
+<canvas id="c512" width="512" height="512"></canvas>
+<script>
+function draw(canvas){
+  const s = canvas.width;
+  const ctx = canvas.getContext("2d");
+  // Background
+  const g = ctx.createLinearGradient(0,0,s,s);
+  g.addColorStop(0,"#1e3a8a");
+  g.addColorStop(1,"#0b1220");
+  ctx.fillStyle = g;
+  const r = s * 0.18;
+  ctx.beginPath();
+  ctx.moveTo(r,0); ctx.lineTo(s-r,0); ctx.quadraticCurveTo(s,0,s,r);
+  ctx.lineTo(s,s-r); ctx.quadraticCurveTo(s,s,s-r,s);
+  ctx.lineTo(r,s); ctx.quadraticCurveTo(0,s,0,s-r);
+  ctx.lineTo(0,r); ctx.quadraticCurveTo(0,0,r,0);
+  ctx.closePath(); ctx.fill();
+  // Text
+  ctx.fillStyle = "#eef2ff";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.font = `900 ${s*0.32}px system-ui, sans-serif`;
+  ctx.fillText("単語", s/2, s*0.38);
+  ctx.font = `800 ${s*0.18}px system-ui, sans-serif`;
+  ctx.fillStyle = "#60a5fa";
+  ctx.fillText("VOCAB", s/2, s*0.68);
+}
+draw(document.getElementById("c192"));
+draw(document.getElementById("c512"));
+
+// Auto-download
+["c192","c512"].forEach(id=>{
+  const canvas = document.getElementById(id);
+  const link = document.createElement("a");
+  link.download = id.replace("c","icon-") + ".png";
+  link.href = canvas.toDataURL("image/png");
+  link.click();
+});
+</script>
+</body></html>
