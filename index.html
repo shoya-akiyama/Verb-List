@@ -752,64 +752,34 @@
     progressText.textContent = `${pos}/${active.length} （〇:${correct} X:${wrong} 未:${unseen}）`;
   }
 
-  // ===== Speech (dictionary audio preferred, fallback to TTS) =====
-  const audioCache = Object.create(null); // word -> audio URL
-  let currentAudio = null;
+  // ===== Speech (TTS - instant, consistent voice) =====
+  let cachedVoice = null;
+  function pickVoice(){
+    const voices = window.speechSynthesis.getVoices?.() || [];
+    if (!voices.length) return null;
+    // en-US voices only
+    const enUS = voices.filter(v => /en[-_]US/i.test(v.lang));
+    if (enUS.length) return enUS[0];
+    const enAny = voices.filter(v => /en[-_]/i.test(v.lang));
+    if (enAny.length) return enAny[0];
+    return null;
+  }
+  function initVoice(){
+    cachedVoice = pickVoice();
+  }
+  initVoice();
+  window.speechSynthesis?.addEventListener?.("voiceschanged", initVoice);
 
   function speakWord(word){
     const text = (word || "").trim();
     if (!text) return;
-    const key = text.toLowerCase();
-
-    // If we have a cached audio URL, play it
-    if (audioCache[key]){
-      playAudioURL(audioCache[key], text);
-      return;
-    }
-
-    // Try to fetch audio from dictionary API
-    fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(key)}`, {mode:"cors"})
-      .then(r => r.ok ? r.json() : Promise.reject())
-      .then(data => {
-        let audioUrl = "";
-        if (Array.isArray(data) && data[0] && Array.isArray(data[0].phonetics)){
-          // Prefer US English audio
-          const usAudio = data[0].phonetics.find(p => p && p.audio && /us\./i.test(p.audio));
-          const anyAudio = data[0].phonetics.find(p => p && p.audio);
-          audioUrl = (usAudio || anyAudio || {}).audio || "";
-        }
-        if (audioUrl){
-          audioCache[key] = audioUrl;
-          playAudioURL(audioUrl, text);
-        } else {
-          fallbackTTS(text);
-        }
-      })
-      .catch(() => fallbackTTS(text));
-  }
-
-  function playAudioURL(url, fallbackText){
-    try {
-      if (currentAudio){ currentAudio.pause(); currentAudio = null; }
-      currentAudio = new Audio(url);
-      currentAudio.play().catch(() => fallbackTTS(fallbackText));
-    } catch { fallbackTTS(fallbackText); }
-  }
-
-  function fallbackTTS(text){
     try { window.speechSynthesis.cancel(); } catch {}
     const u = new SpeechSynthesisUtterance(text);
     u.lang = "en-US";
-    u.rate = 0.92;
-    const voices = window.speechSynthesis.getVoices?.() || [];
-    // Prefer female en-US voice
-    const female = voices.find(v => /en(-|_)US/i.test(v.lang) && /female|samantha|karen|victoria|zira/i.test(v.name));
-    const enUS = voices.find(v => /en(-|_)US/i.test(v.lang));
-    const enAny = voices.find(v => /en(-|_)/i.test(v.lang));
-    u.voice = female || enUS || enAny || null;
+    u.rate = 0.95;
+    if (cachedVoice) u.voice = cachedVoice;
     window.speechSynthesis.speak(u);
   }
-  window.speechSynthesis?.addEventListener?.("voiceschanged", () => {});
 
   // ===== IPA auto fetch (dictionaryapi.dev) =====
   async function ensureIPA(word){
@@ -832,13 +802,6 @@
         if (Array.isArray(phs)){
           const p = phs.find(x => x && typeof x.text === "string" && x.text.trim()) || null;
           phon = p ? p.text.trim() : "";
-          // Cache audio URL for speakWord
-          if (!audioCache[w]){
-            const usA = phs.find(x => x && x.audio && /us\./i.test(x.audio));
-            const anyA = phs.find(x => x && x.audio);
-            const aUrl = (usA || anyA || {}).audio || "";
-            if (aUrl) audioCache[w] = aUrl;
-          }
         }
       }
       ipaCache[w] = phon || "";
