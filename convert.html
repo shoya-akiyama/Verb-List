@@ -30,7 +30,7 @@
 
 <div class="step">
   <div class="stepTitle">Step 1: Excelファイルを選択</div>
-  <p style="font-size:13px;">A列=自動詞JP / B列=他動詞JP / C列=英単語 / D列=自動詞例文 / E列=他動詞例文 / F列=過去形 / G列=発音記号<br>シート名 = カテゴリ名</p>
+  <p style="font-size:13px;">A列=自動詞JP / B列=他動詞JP / C列=英単語 / D列=自動詞例文 / E列=他動詞例文 / F列=過去形 / G列=発音記号 / H列=レベル<br>シート名 = カテゴリ名</p>
   <input type="file" id="fileInput" accept=".xlsx,.xls" />
   <div id="fileStatus"></div>
 </div>
@@ -128,7 +128,8 @@ generateBtn.addEventListener("click", () => {
         ex_i: String(r[3] || "").trim(),
         ex_t: String(r[4] || "").trim(),
         past: String(r[5] || "").trim(),
-        ipa:  String(r[6] || "").trim()
+        ipa:  String(r[6] || "").trim(),
+        level: String(r[7] || "").trim()
       });
     }
 
@@ -154,7 +155,7 @@ generateBtn.addEventListener("click", () => {
   const firstCat = categories[catNames[0]];
   const embJSON = JSON.stringify(firstCat.map(w => ({
     jp_i: w.jp_i, jp_t: w.jp_t, word: w.word,
-    ex_i: w.ex_i, ex_t: w.ex_t, past: w.past, ipa: w.ipa
+    ex_i: w.ex_i, ex_t: w.ex_t, past: w.past, ipa: w.ipa, level: w.level
   })));
 
   let code = `  const CATEGORIES = ${catJSON};\n`;

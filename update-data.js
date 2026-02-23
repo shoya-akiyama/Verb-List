@@ -28,7 +28,8 @@ for (const name of wb.SheetNames) {
       ex_i: String(r[3] || '').trim(),
       ex_t: String(r[4] || '').trim(),
       past: String(r[5] || '').trim(),
-      ipa:  String(r[6] || '').trim()
+      ipa:  String(r[6] || '').trim(),
+      level: String(r[7] || '').trim()
     });
   }
   if (words.length) {

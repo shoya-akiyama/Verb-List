@@ -12,10 +12,7 @@ function draw(canvas){
   const s = canvas.width;
   const ctx = canvas.getContext("2d");
   // Background
-  const g = ctx.createLinearGradient(0,0,s,s);
-  g.addColorStop(0,"#1e3a8a");
-  g.addColorStop(1,"#0b1220");
-  ctx.fillStyle = g;
+  ctx.fillStyle = "#000000";
   const r = s * 0.18;
   ctx.beginPath();
   ctx.moveTo(r,0); ctx.lineTo(s-r,0); ctx.quadraticCurveTo(s,0,s,r);
@@ -23,15 +20,12 @@ function draw(canvas){
   ctx.lineTo(r,s); ctx.quadraticCurveTo(0,s,0,s-r);
   ctx.lineTo(0,r); ctx.quadraticCurveTo(0,0,r,0);
   ctx.closePath(); ctx.fill();
-  // Text
+  // Text - single character centered
   ctx.fillStyle = "#eef2ff";
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
-  ctx.font = `900 ${s*0.32}px system-ui, sans-serif`;
-  ctx.fillText("単語", s/2, s*0.38);
-  ctx.font = `800 ${s*0.18}px system-ui, sans-serif`;
-  ctx.fillStyle = "#60a5fa";
-  ctx.fillText("VOCAB", s/2, s*0.68);
+  ctx.font = `900 ${s*0.52}px system-ui, sans-serif`;
+  ctx.fillText("動", s/2, s*0.52);
 }
 draw(document.getElementById("c192"));
 draw(document.getElementById("c512"));
