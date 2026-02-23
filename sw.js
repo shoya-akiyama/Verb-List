@@ -1,4 +1,4 @@
-const CACHE_NAME = "vocab-app-v1";
+const CACHE_NAME = "vocab-app-v2";
 const ASSETS = [
   "./",
   "./index.html",
@@ -25,20 +25,20 @@ self.addEventListener("activate", (e) => {
   self.clients.claim();
 });
 
-// Fetch: cache-first, fallback to network
+// Fetch: network-first, fallback to cache (always gets latest when online)
 self.addEventListener("fetch", (e) => {
   e.respondWith(
-    caches.match(e.request).then((cached) => {
-      if (cached) return cached;
-      return fetch(e.request).then((res) => {
-        // Cache new successful requests
-        if (res.ok && e.request.method === "GET") {
-          const clone = res.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(e.request, clone));
-        }
-        return res;
-      }).catch(() => {
-        // Offline fallback for navigation
+    fetch(e.request).then((res) => {
+      // Update cache with fresh response
+      if (res.ok && e.request.method === "GET") {
+        const clone = res.clone();
+        caches.open(CACHE_NAME).then((cache) => cache.put(e.request, clone));
+      }
+      return res;
+    }).catch(() => {
+      // Offline: serve from cache
+      return caches.match(e.request).then((cached) => {
+        if (cached) return cached;
         if (e.request.mode === "navigate") {
           return caches.match("./index.html");
         }
