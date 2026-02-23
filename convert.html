@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Excel → 単語暗記データ変換</title>
+<style>
+  :root{ --bg:#0b1220; --text:#eef2ff; --muted:#a9b3d6; }
+  *{ box-sizing:border-box; }
+  body{ margin:0; background:var(--bg); color:var(--text); font-family:system-ui,sans-serif; padding:24px; }
+  h1{ font-size:20px; margin:0 0 8px; }
+  p{ color:var(--muted); font-size:14px; line-height:1.5; margin:0 0 16px; }
+  .step{ background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.12); border-radius:14px; padding:18px; margin-bottom:16px; }
+  .stepTitle{ font-weight:900; font-size:15px; margin-bottom:10px; }
+  input[type="file"]{ display:block; margin:8px 0; }
+  button{ appearance:none; border:1px solid rgba(100,160,255,.5); background:rgba(100,160,255,.12); color:#60a5fa; border-radius:10px; padding:10px 20px; font-size:14px; font-weight:800; cursor:pointer; }
+  button:disabled{ opacity:.4; cursor:default; }
+  .preview{ background:rgba(0,0,0,.3); border:1px solid rgba(255,255,255,.1); border-radius:10px; padding:12px; margin-top:12px; font-size:12px; max-height:300px; overflow:auto; white-space:pre-wrap; word-break:break-all; font-family:monospace; }
+  .ok{ color:#34d399; font-weight:800; }
+  .err{ color:#f87171; font-weight:800; }
+  .info{ color:var(--muted); font-size:13px; margin-top:8px; }
+  table{ border-collapse:collapse; font-size:12px; margin-top:10px; width:100%; }
+  th,td{ border:1px solid rgba(255,255,255,.12); padding:6px 8px; text-align:left; }
+  th{ background:rgba(255,255,255,.06); font-weight:800; }
+</style>
+</head>
+<body>
+<h1>Excel → 単語暗記データ変換ツール</h1>
+<p>Excelファイル(.xlsx)を読み込んで、index.html に貼り付けるデータコードを生成します。</p>
+
+<div class="step">
+  <div class="stepTitle">Step 1: Excelファイルを選択</div>
+  <p style="font-size:13px;">A列=自動詞JP / B列=他動詞JP / C列=英単語 / D列=自動詞例文 / E列=他動詞例文 / F列=過去形 / G列=発音記号<br>シート名 = カテゴリ名</p>
+  <input type="file" id="fileInput" accept=".xlsx,.xls" />
+  <div id="fileStatus"></div>
+</div>
+
+<div class="step">
+  <div class="stepTitle">Step 2: 確認</div>
+  <div id="sheetInfo">ファイルを選択してください</div>
+</div>
+
+<div class="step">
+  <div class="stepTitle">Step 3: コードを生成 → コピー</div>
+  <button id="generateBtn" disabled>生成する</button>
+  <button id="copyBtn" style="display:none; margin-left:8px;">クリップボードにコピー</button>
+  <div id="copyStatus"></div>
+  <div class="preview" id="output" style="display:none;"></div>
+</div>
+
+<div class="step">
+  <div class="stepTitle">Step 4: index.html に貼り付け</div>
+  <p style="font-size:13px; color:var(--muted);">
+    1. index.html をテキストエディタで開く<br>
+    2. <code>const CATEGORIES = {...</code> で始まる行を探す（とても長い1行）<br>
+    3. その行の <strong>先頭の半角スペースから行末のセミコロンまで</strong> を全て選択して削除<br>
+    4. Step 3 でコピーした内容を貼り付け<br>
+    5. 保存して GitHub にアップロード
+  </p>
+</div>
+
+<!-- SheetJS CDN -->
+<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+<script>
+const fileInput = document.getElementById("fileInput");
+const fileStatus = document.getElementById("fileStatus");
+const sheetInfo = document.getElementById("sheetInfo");
+const generateBtn = document.getElementById("generateBtn");
+const copyBtn = document.getElementById("copyBtn");
+const copyStatus = document.getElementById("copyStatus");
+const output = document.getElementById("output");
+
+let workbook = null;
+
+fileInput.addEventListener("change", async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  try {
+    const buf = await file.arrayBuffer();
+    workbook = XLSX.read(buf, { type: "array" });
+
+    const names = workbook.SheetNames;
+    fileStatus.innerHTML = `<span class="ok">読み込み成功: ${names.length} シート</span>`;
+
+    let html = "<table><tr><th>シート名（カテゴリ）</th><th>単語数</th><th>最初の単語</th></tr>";
+    for (const name of names) {
+      const ws = workbook.Sheets[name];
+      const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: "" });
+      // Filter rows that have a word in column C (index 2)
+      const valid = rows.filter((r, i) => r[2] && String(r[2]).trim() && !(i === 0 && /^(word|column|英単語|英語|単語)/i.test(String(r[2]).trim())) && !/^column\d/i.test(String(r[2]).trim()));
+      const first = valid.length ? String(valid[0][2]).trim() : "-";
+      html += `<tr><td>${esc(name)}</td><td>${valid.length}</td><td>${esc(first)}</td></tr>`;
+    }
+    html += "</table>";
+    sheetInfo.innerHTML = html;
+    generateBtn.disabled = false;
+
+  } catch (err) {
+    fileStatus.innerHTML = `<span class="err">エラー: ${esc(err.message)}</span>`;
+    workbook = null;
+    generateBtn.disabled = true;
+  }
+});
+
+generateBtn.addEventListener("click", () => {
+  if (!workbook) return;
+
+  const categories = {};
+
+  for (const name of workbook.SheetNames) {
+    const ws = workbook.Sheets[name];
+    const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: "" });
+
+    const words = [];
+    for (let ri = 0; ri < rows.length; ri++) {
+      const r = rows[ri];
+      const word = String(r[2] || "").trim();
+      if (!word) continue;
+      // Skip header row (first row or known header words)
+      if (ri === 0 && /^(word|column|英単語|英語|単語)/i.test(word)) continue;
+      if (/^(word|column\d)/i.test(word)) continue;
+
+      words.push({
+        jp_i: String(r[0] || "").trim(),
+        jp_t: String(r[1] || "").trim(),
+        word: word,
+        ex_i: String(r[3] || "").trim(),
+        ex_t: String(r[4] || "").trim(),
+        past: String(r[5] || "").trim(),
+        ipa:  String(r[6] || "").trim()
+      });
+    }
+
+    if (words.length > 0) {
+      categories[name] = words;
+    }
+  }
+
+  const catNames = Object.keys(categories);
+  if (!catNames.length) {
+    output.style.display = "block";
+    output.textContent = "有効な単語が見つかりませんでした。";
+    return;
+  }
+
+  // Build MODE_MAP line too
+  const modeMap = {};
+  catNames.forEach((name, i) => { modeMap[String(i + 1)] = name; });
+
+  // Generate code
+  const catJSON = JSON.stringify(categories);
+  // EMBEDDED_ITEMS = first category's words (for fallback)
+  const firstCat = categories[catNames[0]];
+  const embJSON = JSON.stringify(firstCat.map(w => ({
+    jp_i: w.jp_i, jp_t: w.jp_t, word: w.word,
+    ex_i: w.ex_i, ex_t: w.ex_t, past: w.past, ipa: w.ipa
+  })));
+
+  let code = `  const CATEGORIES = ${catJSON};\n`;
+  code += `    const EMBEDDED_ITEMS = ${embJSON};`;
+
+  output.style.display = "block";
+  output.textContent = code;
+  copyBtn.style.display = "inline-block";
+
+  // Also show MODE_MAP update reminder
+  const modeMapCode = JSON.stringify(modeMap);
+  copyStatus.innerHTML = `<div class="info" style="margin-top:10px;">
+    <span class="ok">生成完了！</span> カテゴリ: ${catNames.map(n => esc(n)).join(", ")}<br><br>
+    <strong>※ カテゴリ名やシート数が変わった場合</strong>は、index.html 内の以下の行も更新してください：<br>
+    <code>const MODE_MAP = ${esc(modeMapCode)};</code><br><br>
+    さらに、HTML内のカテゴリボタンも同様にシート名に合わせて更新してください。
+  </div>`;
+});
+
+copyBtn.addEventListener("click", async () => {
+  try {
+    await navigator.clipboard.writeText(output.textContent);
+    copyBtn.textContent = "コピーしました！";
+    setTimeout(() => { copyBtn.textContent = "クリップボードにコピー"; }, 2000);
+  } catch {
+    // Fallback
+    const range = document.createRange();
+    range.selectNodeContents(output);
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+    document.execCommand("copy");
+    copyBtn.textContent = "コピーしました！";
+    setTimeout(() => { copyBtn.textContent = "クリップボードにコピー"; }, 2000);
+  }
+});
+
+function esc(s) {
+  return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+}
+</script>
+</body>
+</html>
