@@ -175,36 +175,8 @@
       transition: width .3s ease;
     }
 
-    /* ===== Dashboard ===== */
-    .dashboard{
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 10px;
-      margin-bottom: 14px;
-    }
-    .dashItem{
-      border: 1px solid rgba(255,255,255,.10);
-      border-radius: 12px;
-      background: rgba(255,255,255,.04);
-      padding: 12px 10px;
-      text-align: center;
-      display:flex;
-      flex-direction:column;
-      gap: 2px;
-    }
-    .dashNum{
-      font-size: 22px;
-      font-weight: 950;
-      line-height: 1.15;
-    }
-    .dashNum.green{ color: #34d399; }
-    .dashNum.red{ color: #f87171; }
-    .dashNum.blue{ color: #60a5fa; }
-    .dashLabel{
-      font-size: 11px;
-      color: var(--muted);
-      font-weight: 700;
-    }
+    /* ===== Dashboard (hidden) ===== */
+    .dashboard{ display:none; }
 
     .jpBlock{
       width:100%;
@@ -422,9 +394,7 @@
 
     /* ===== Search ===== */
     .searchSection{
-      margin-top: 16px;
-      border-top: 1px solid rgba(255,255,255,.10);
-      padding-top: 14px;
+      margin-bottom: 12px;
     }
     .searchInput{
       width: 100%;
@@ -489,33 +459,51 @@
     .modeCard{ max-height: 92vh; overflow-y:auto; }
 
     .levelFilter{
-      margin: 14px 0 6px;
+      margin-bottom: 12px;
     }
-    .levelFilterTitle{
-      font-size:13px; font-weight:800; color:var(--muted); margin-bottom:8px;
+    .levelSelect{
+      width:100%;
+      appearance:none;
+      -webkit-appearance:none;
+      border:1px solid rgba(100,160,255,.35);
+      background: rgba(100,160,255,.08);
+      color:#60a5fa;
+      border-radius:12px;
+      padding:10px 36px 10px 14px;
+      font-size:14px;
+      font-weight:700;
+      cursor:pointer;
+      outline:none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' fill='none'%3E%3Cpath d='M1 1.5l5 5 5-5' stroke='%2360a5fa' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+      background-repeat:no-repeat;
+      background-position:right 12px center;
     }
-    .levelChips{
-      display:flex; flex-wrap:wrap; gap:6px;
+    .levelSelect:focus{ border-color:rgba(100,160,255,.7); }
+    .levelSelect option{
+      background:#0b1220; color:#eef2ff;
     }
-    .levelChip{
-      appearance:none; border:1px solid rgba(100,160,255,.3); background:rgba(100,160,255,.08);
-      color:#60a5fa; border-radius:20px; padding:5px 12px; font-size:13px; font-weight:700;
-      cursor:pointer; transition: all .15s;
-    }
-    .levelChip.active{
-      background:rgba(100,160,255,.35); border-color:rgba(100,160,255,.7); color:#fff;
-    }
-    .levelChip:hover{ background:rgba(100,160,255,.2); }
     .studyLevelBar{
-      display:flex; align-items:center; gap:6px; padding:0 4px; margin-bottom:4px; flex-wrap:wrap;
+      display:flex; align-items:center; gap:6px; padding:0 4px; margin-bottom:4px;
     }
-    .studyLevelChip{
-      appearance:none; border:1px solid rgba(100,160,255,.3); background:rgba(100,160,255,.08);
-      color:#60a5fa; border-radius:14px; padding:3px 9px; font-size:11px; font-weight:700;
-      cursor:pointer; transition: all .15s;
+    .studyLevelSelect{
+      appearance:none;
+      -webkit-appearance:none;
+      border:1px solid rgba(100,160,255,.3);
+      background: rgba(100,160,255,.08);
+      color:#60a5fa;
+      border-radius:10px;
+      padding:4px 28px 4px 10px;
+      font-size:12px;
+      font-weight:700;
+      cursor:pointer;
+      outline:none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' fill='none'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%2360a5fa' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+      background-repeat:no-repeat;
+      background-position:right 8px center;
     }
-    .studyLevelChip.active{
-      background:rgba(100,160,255,.35); border-color:rgba(100,160,255,.7); color:#fff;
+    .studyLevelSelect:focus{ border-color:rgba(100,160,255,.7); }
+    .studyLevelSelect option{
+      background:#0b1220; color:#eef2ff;
     }
 
     @media (max-width: 420px){
@@ -531,7 +519,13 @@
     
   <div class="modeScreen" id="modeScreen" role="dialog" aria-modal="true">
     <div class="modeCard">
-      <div class="dashboard" id="dashboard"></div>
+      <div class="searchSection">
+        <input type="text" class="searchInput" id="searchInput" placeholder="単語・日本語で検索..." autocomplete="off" />
+        <div class="searchResults" id="searchResults"></div>
+      </div>
+      <div class="levelFilter" id="levelFilter">
+        <select class="levelSelect" id="levelSelect"></select>
+      </div>
       <div class="modeTitle">カテゴリを選択</div>
       <div class="modeBtns" id="modeBtns">
         <button type="button" class="modeBtn" data-mode="1">
@@ -556,14 +550,7 @@
         </button>
         <button type="button" class="modeBtn modeBtnBm" data-mode="bm" id="bmModeBtn"><div class="modeBtnTop"><span class="modeBtnName">★ 苦手単語</span><span class="modeBtnCount" id="bmModeCount"></span></div></button>
       </div>
-      <div class="levelFilter" id="levelFilter">
-        <div class="levelFilterTitle">レベルで絞り込み</div>
-        <div class="levelChips" id="levelChips"></div>
-      </div>
-      <div class="searchSection">
-        <input type="text" class="searchInput" id="searchInput" placeholder="単語・日本語で検索..." autocomplete="off" />
-        <div class="searchResults" id="searchResults"></div>
-      </div>
+      <div class="dashboard" id="dashboard"></div>
     </div>
   </div>
 
@@ -1352,93 +1339,75 @@ function load(){
     const btns = document.querySelectorAll(".modeBtn");
     if (!overlay || !study || !btns.length) return;
 
-    // ===== Level filter chips =====
-    const levelChipsEl = document.getElementById("levelChips");
+    // ===== Level filter (dropdown) =====
+    const levelSelectEl = document.getElementById("levelSelect");
     const studyLevelBar = document.getElementById("studyLevelBar");
-    if (levelChipsEl){
-      // Collect all unique levels
-      const allLevels = new Set();
-      for (const words of Object.values(CATEGORIES)){
-        for (const w of words){
-          const lv = (w.level || "").trim();
-          if (lv) allLevels.add(lv);
-        }
-      }
-      const sortedLevels = [...allLevels].sort((a,b) => Number(a) - Number(b));
 
-      // "All" chip
-      const allChip = document.createElement("button");
-      allChip.type = "button";
-      allChip.className = "levelChip active";
-      allChip.textContent = "全レベル";
-      allChip.dataset.level = "";
-      levelChipsEl.appendChild(allChip);
+    // Collect all unique levels
+    const allLevels = new Set();
+    for (const words of Object.values(CATEGORIES)){
+      for (const w of words){
+        const lv = (w.level || "").trim();
+        if (lv) allLevels.add(lv);
+      }
+    }
+    const sortedLevels = [...allLevels].sort((a,b) => Number(a) - Number(b));
+
+    if (levelSelectEl){
+      // Build dropdown options
+      const allOpt = document.createElement("option");
+      allOpt.value = "";
+      allOpt.textContent = "全レベル";
+      levelSelectEl.appendChild(allOpt);
 
       for (const lv of sortedLevels){
-        const chip = document.createElement("button");
-        chip.type = "button";
-        chip.className = "levelChip";
-        chip.textContent = "Lv." + lv;
-        chip.dataset.level = lv;
-        levelChipsEl.appendChild(chip);
+        const opt = document.createElement("option");
+        opt.value = lv;
+        opt.textContent = "Lv." + lv;
+        levelSelectEl.appendChild(opt);
       }
 
-      function setActiveLevel(lv){
-        selectedLevel = lv;
-        levelChipsEl.querySelectorAll(".levelChip").forEach(c => {
-          c.classList.toggle("active", c.dataset.level === lv);
-        });
+      levelSelectEl.addEventListener("change", ()=>{
+        selectedLevel = levelSelectEl.value;
+        // Sync study dropdown
+        if (studyLevelSelect) studyLevelSelect.value = selectedLevel;
         updateCatButtons();
         updateDashboard();
-      }
-
-      levelChipsEl.addEventListener("click", (ev)=>{
-        const chip = ev.target.closest(".levelChip");
-        if (!chip) return;
-        setActiveLevel(chip.dataset.level);
       });
+    }
 
-      // Build study screen level bar
-      function buildStudyLevelBar(){
-        if (!studyLevelBar) return;
-        studyLevelBar.innerHTML = "";
-        const allC = document.createElement("button");
-        allC.type = "button";
-        allC.className = "studyLevelChip" + (selectedLevel === "" ? " active" : "");
-        allC.textContent = "全";
-        allC.dataset.level = "";
-        studyLevelBar.appendChild(allC);
-        for (const lv of sortedLevels){
-          const c = document.createElement("button");
-          c.type = "button";
-          c.className = "studyLevelChip" + (selectedLevel === lv ? " active" : "");
-          c.textContent = lv;
-          c.dataset.level = lv;
-          studyLevelBar.appendChild(c);
-        }
-        studyLevelBar.addEventListener("click", (ev)=>{
-          const chip = ev.target.closest(".studyLevelChip");
-          if (!chip) return;
-          const newLv = chip.dataset.level;
-          if (newLv === selectedLevel) return;
-          selectedLevel = newLv;
-          // Update active states
-          studyLevelBar.querySelectorAll(".studyLevelChip").forEach(c => {
-            c.classList.toggle("active", c.dataset.level === newLv);
-          });
-          // Also sync mode screen chips
-          levelChipsEl.querySelectorAll(".levelChip").forEach(c => {
-            c.classList.toggle("active", c.dataset.level === newLv);
-          });
-          // Re-apply mode with new level filter
-          if (selectedMode && selectedMode !== "bm"){
-            applyMode(selectedMode);
-            save();
-            render();
-          }
-        });
+    // Build study screen level dropdown
+    let studyLevelSelect = null;
+    if (studyLevelBar){
+      studyLevelBar.innerHTML = "";
+      studyLevelSelect = document.createElement("select");
+      studyLevelSelect.className = "studyLevelSelect";
+      const allC = document.createElement("option");
+      allC.value = "";
+      allC.textContent = "全レベル";
+      studyLevelSelect.appendChild(allC);
+      for (const lv of sortedLevels){
+        const opt = document.createElement("option");
+        opt.value = lv;
+        opt.textContent = "Lv." + lv;
+        studyLevelSelect.appendChild(opt);
       }
-      buildStudyLevelBar();
+      studyLevelSelect.value = selectedLevel;
+      studyLevelBar.appendChild(studyLevelSelect);
+
+      studyLevelSelect.addEventListener("change", ()=>{
+        const newLv = studyLevelSelect.value;
+        if (newLv === selectedLevel) return;
+        selectedLevel = newLv;
+        // Sync mode screen dropdown
+        if (levelSelectEl) levelSelectEl.value = newLv;
+        // Re-apply mode with new level filter
+        if (selectedMode && selectedMode !== "bm"){
+          applyMode(selectedMode);
+          save();
+          render();
+        }
+      });
     }
 
     // ===== Read saved stats for each category =====
@@ -1561,12 +1530,10 @@ function load(){
       selectedMode = btn.getAttribute("data-mode") || "";
       try{ localStorage.setItem("vocab_selected_mode", selectedMode); }catch(_){}
       applyMode(selectedMode);
-      // Sync study level bar active state
+      // Sync study level dropdown
       if (studyLevelBar){
         studyLevelBar.style.display = "";
-        studyLevelBar.querySelectorAll(".studyLevelChip").forEach(c => {
-          c.classList.toggle("active", c.dataset.level === selectedLevel);
-        });
+        if (studyLevelSelect) studyLevelSelect.value = selectedLevel;
       }
       overlay.style.display = "none";
       study.style.visibility = "visible";

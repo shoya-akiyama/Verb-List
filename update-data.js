@@ -86,7 +86,7 @@ changed++;
 
 // Replace category buttons in HTML
 html = html.replace(
-  /(<div class="modeBtns" id="modeBtns">\n)([\s\S]*?)(<\/div>\n\s*<div class="searchSection">)/,
+  /(<div class="modeBtns" id="modeBtns">\n)([\s\S]*?)(<\/div>\n\s*<div class="dashboard")/,
   '$1' + buttonsHTML + '\n      $3'
 );
 changed++;
